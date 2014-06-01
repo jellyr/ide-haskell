@@ -88,7 +88,7 @@ updateMenu = ->
 
 clearMenu = ->
   atom.menu.template = (
-    obj for obj in atom.menu.template when obj.label isnt "Haskell IDE"
+    obj for obj in atom.menu.template when obj.label isnt 'Haskell IDE'
   )
   atom.menu.update()
 
