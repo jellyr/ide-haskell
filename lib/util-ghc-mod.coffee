@@ -93,7 +93,7 @@ type = ({fileName, pt, onResult, onComplete, onFailure, onDone}) ->
   resultViewed = false
   run
     cmd: 'type'
-    args: [fileName, 'DummyModule', pt.row + 1, pt.column + 1]
+    args: [fileName, 'DummyModule', "#{pt.row + 1}", "#{pt.column + 1}"]
     cwd: atom.project.getRootDirectory().getPath()
     onMessage: (line) ->
       return if resultViewed is true
