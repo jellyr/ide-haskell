@@ -36,7 +36,7 @@ check = ({fileName, onResult, onComplete, onFailure, onDone}) ->
     args: [fileName]
     cwd: atom.project.getRootDirectory().getPath()
     onMessage: (line) ->
-      if matches = /([^:]+):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
+      if matches = /(.+?):(\d+):(\d+):((?:Warning: )?)(.*)/.exec(line)
         [_, uri, row, col, isWarning, content] = matches
         type =
           if isWarning.length
@@ -68,7 +68,7 @@ lint = ({fileName, onResult, onComplete, onFailure, onDone}) ->
     args: [fileName]
     cwd: atom.project.getRootDirectory().getPath()
     onMessage: (line) ->
-      if matches = /([^:]+):(\d+):(\d+):\s([^:]+):\s(.*)/.exec(line)
+      if matches = /(.+?):(\d+):(\d+):\s([^:]+):\s(.*)/.exec(line)
         [_, uri, row, col, type, content] = matches
         pos = [parseInt(row, 10) - 1, parseInt(col, 10) - 1]
         range = [pos, [pos[0], pos[1] + 1]]
@@ -93,7 +93,7 @@ type = ({fileName, pt, onResult, onComplete, onFailure, onDone}) ->
   resultViewed = false
   run
     cmd: 'type'
-    args: [fileName, 'DummyModule', pt.row + 1, pt.column + 1]
+    args: [fileName, 'DummyModule', "#{pt.row + 1}", "#{pt.column + 1}"]
     cwd: atom.project.getRootDirectory().getPath()
     onMessage: (line) ->
       return if resultViewed is true

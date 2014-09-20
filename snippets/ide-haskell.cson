@@ -4,9 +4,4 @@
     'body': '{-# $1 #-'
   'Module':
     'prefix': 'module'
-    'body':
-      """
-      module ${1:Name}
-          (
-          ) where
-      """
+    'body': 'module ${1:Name} where'
