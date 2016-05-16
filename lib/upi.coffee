@@ -1,5 +1,7 @@
 {CompositeDisposable, Point} = require 'atom'
 {MainMenuLabel, getEventType} = require './utils'
+_ = require 'underscore-plus'
+{delimiter} = require 'path'
 
 module.exports =
 class UPI
@@ -227,3 +229,44 @@ class UPIInstance
     return unless controller?
 
     callback (controller.getEventRange pos, eventType)
+
+  ##################################
+  ######### PATH OPTIONS ###########
+  ##################################
+
+  onDidChangeVersion: (callback) ->
+    @pluginManager.emitter.on 'did-change-ghc-version', callback
+
+  getPATH: (additionalPath = []) ->
+    if additionalPath is ''
+      additionalPath = []
+    else if (typeof additionalPath) is 'string'
+      additionalPath = additionalPath.split(delimiter)
+    activeVersion = @pluginManager.activeGHCVersion
+    versionPath = atom.config.get("ide-haskell.pathSettings.ghcSpecificOptions.#{activeVersion}.path") ? []
+    globalPath = atom.config.get('ide-haskell.pathSettings.globalPath') ? []
+
+    if process.platform is 'win32'
+      PATH = []
+      capMask = (str, mask) ->
+        a = str.split ''
+        for c, i in a
+          if mask & Math.pow(2, i)
+            a[i] = a[i].toUpperCase()
+        return a.join ''
+      for m in [0b1111..0]
+        vn = capMask("path", m)
+        if process.env[vn]?
+          PATH = _.union PATH, process.env[vn].split(delimiter)
+    else
+      PATH = process.env.PATH.split(delimiter)
+
+    result = _.union(additionalPath, versionPath, globalPath, PATH)
+
+    return result.join(delimiter)
+  getSandbox: ->
+    activeVersion = @pluginManager.activeGHCVersion
+    atom.config.get("ide-haskell.pathSettings.ghcSpecificOptions.#{activeVersion}.sandbox") ? ''
+  getBuildDir: ->
+    activeVersion = @pluginManager.activeGHCVersion
+    atom.config.get("ide-haskell.pathSettings.ghcSpecificOptions.#{activeVersion}.buildDir") ? 'dist'

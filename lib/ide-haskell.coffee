@@ -1,6 +1,6 @@
 {PluginManager} = require './plugin-manager'
 {MainMenuLabel, getEventType} = require './utils'
-{CompositeDisposable} = require 'atom'
+{CompositeDisposable, Emitter} = require 'atom'
 {prettifyFile} = require './binutils/prettify'
 UPI = require './upi'
 
@@ -10,6 +10,28 @@ module.exports = IdeHaskell =
   menu: null
 
   config:
+    pathSettings:
+      order: 0
+      type: "object"
+      properties:
+        globalPath:
+          type: 'array'
+          description: 'Add this to PATH for any GHC version;
+                        comma-separated'
+          default: []
+          order: 1
+        defaultGhcVersion:
+          type: 'string'
+          description: 'Default active GHC version.
+                        Can be switched with ide-haskell:switch-ghc-version command.
+                        You can leave this empty if you only need to use single GHC version'
+          default: ''
+          enum: ['']
+          order: 2
+        ghcSpecificOptions:
+          order: 3
+          type: 'object'
+          properties: {}
     onSavePrettify:
       type: "boolean"
       default: false
@@ -146,10 +168,34 @@ module.exports = IdeHaskell =
 
     @pluginManager = new PluginManager state
 
+    # settings
+
+    @disposables.add atom.workspace.addOpener (uriToOpen) ->
+      try
+        url = require 'url'
+        { protocol, host, pathname } = url.parse uriToOpen
+      catch error
+        console.error error
+        return
+
+      return unless protocol is 'ide-haskell:' and host is 'config'
+
+      IdeHaskellSettingsView = require './settings/ide-haskell-settings-view'
+      return new IdeHaskellSettingsView()
+
     # global commands
     @disposables.add atom.commands.add 'atom-workspace',
       'ide-haskell:toggle-output': =>
         @pluginManager.togglePanel()
+      'ide-haskell:open-settings': ->
+        atom.workspace.open('ide-haskell://config')
+      'ide-haskell:switch-ghc-version': =>
+        VersionSelectListView = require './settings/version-select-view'
+        items = (k for k, v of atom.config.get('ide-haskell.pathSettings.ghcSpecificOptions') when v?)
+        new VersionSelectListView
+          onConfirmed: (version) =>
+            @pluginManager.setActiveGHCVersion version
+          items: items
 
     @disposables.add \
       atom.commands.add 'atom-text-editor[data-grammar~="haskell"]',
@@ -180,8 +226,19 @@ module.exports = IdeHaskell =
       submenu : [
         {label: 'Prettify', command: 'ide-haskell:prettify-file'}
         {label: 'Toggle Panel', command: 'ide-haskell:toggle-output'}
+        {label: 'Settings', command: 'ide-haskell:open-settings'}
+        {label: 'Switch Active GHC Version', command: 'ide-haskell:switch-ghc-version'}
       ]
     ]
+
+    configSchema = require './settings/config-schema'
+
+    for k, v of atom.config.get('ide-haskell.pathSettings.ghcSpecificOptions') when v?
+      atom.config.setSchema("ide-haskell.pathSettings.ghcSpecificOptions.#{k}", configSchema)
+      IdeHaskell.config.pathSettings.properties.defaultGhcVersion.enum.push k
+
+    @pluginManager.activeGHCVersion =
+      state.activeVersion ? atom.config.get('ide-haskell.pathSettings.defaultGhcVersion')
 
   deactivate: ->
     @pluginManager.deactivate()

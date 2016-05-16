@@ -20,6 +20,8 @@ class PluginManager
     @createOutputViewPanel(state)
     @subscribeEditorController()
 
+    @activeGHCVersion = state.activeGHCVersion ? ''
+
   deactivate: ->
     @checkResults.destroy()
     @disposables.dispose()
@@ -30,6 +32,7 @@ class PluginManager
 
   serialize: ->
     outputView: @outputView?.serialize()
+    activeGHCVersion: @activeGHCVersion
 
   onShouldShowTooltip: (callback) ->
     @emitter.on 'should-show-tooltip', callback
@@ -105,6 +108,9 @@ class PluginManager
 
   prevError: ->
     @outputView?.showPrevError()
+
+  setActiveGHCVersion: (@activeGHCVersion) ->
+    @emitter.emit 'did-change-ghc-version', @activeGHCVersion
 
 
 module.exports = {
