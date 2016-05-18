@@ -1,4 +1,5 @@
 path = require 'path'
+{isType} = require 'atom-haskell-utils'
 
 module.exports = Utils =
   MainMenuLabel: 'Haskell IDE'
@@ -14,5 +15,4 @@ module.exports = Utils =
     editor.bufferPositionForScreenPosition (
       atom.views.getView(editor).component.screenPositionForMouseEvent event)
 
-  isType: (obj, type) ->
-    Object.prototype.toString.call(obj) is "[object #{type}]"
+  isType: isType
