@@ -1,4 +1,5 @@
 MessageObject = require '../message-object.coffee'
+{isType} = require '../utils'
 
 class TooltipMessage
   constructor: (text) ->
@@ -7,7 +8,7 @@ class TooltipMessage
 class TooltipView extends HTMLElement
   setMessage: (message) ->
     @innerHtml = ''
-    if message instanceof Array
+    if isType(message, 'Array')
       for m in message
         @appendChild inner = document.createElement 'div'
         MessageObject.fromObject(m).paste(inner)

@@ -1,5 +1,5 @@
 {CompositeDisposable, Point} = require 'atom'
-{MainMenuLabel, getEventType} = require './utils'
+{isType, MainMenuLabel, getEventType} = require './utils'
 _ = require 'underscore-plus'
 {delimiter} = require 'path'
 
@@ -154,7 +154,7 @@ class UPIInstance
       tooltip(crange).then ({range, text}) ->
         controller.showTooltip pos, range, text, {eventType, subtype: 'external'}
       .catch (status = {status: 'warning'}) =>
-        if status instanceof Error
+        if isType(status, 'Error')
           console.warn status
           status = status: 'warning'
         unless status.ignore
