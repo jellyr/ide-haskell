@@ -5,7 +5,7 @@ _ = require 'underscore-plus'
 
 module.exports =
 class UPI
-  constructor: (@package) ->
+  constructor: (@package, @version) ->
 
   ###
   Call this function in consumer to get actual interface
@@ -13,7 +13,17 @@ class UPI
   disposables: CompositeDisposable, one you will return in consumer
   ###
   registerPlugin: (disposables) ->
-    new UPIInstance(@package.pluginManager, disposables)
+    switch @version
+      when 1
+        new UPIInstance(@package.pluginManager, disposables)
+      when 10
+        if @package.pluginManager?
+          Promise.resolve(new UPIInstance(@package.pluginManager, disposables))
+        else
+          new Promise (resolve) ->
+            disp = @package.emitter.on 'did-activate', (pluginManager) ->
+              disp.dispose()
+              resolve(new UPIInstance(pluginManager, disposables))
 
 class UPIInstance
   constructor: (@pluginManager, disposables) ->
