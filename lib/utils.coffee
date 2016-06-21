@@ -14,5 +14,3 @@ module.exports = Utils =
   bufferPositionFromMouseEvent: (editor, event) ->
     editor.bufferPositionForScreenPosition (
       atom.views.getView(editor).component.screenPositionForMouseEvent event)
-
-  isType: isType
