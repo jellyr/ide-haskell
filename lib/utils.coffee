@@ -1,5 +1,4 @@
 path = require 'path'
-{isType} = require 'atom-haskell-utils'
 
 module.exports = Utils =
   MainMenuLabel: 'Haskell IDE'
