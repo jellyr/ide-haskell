@@ -205,13 +205,14 @@ This package relies on grammar defined by `language-haskell`. Any other Haskell 
 ## Installation
 
 ```
-$ apm install language-haskell haskell-ghc-mod ide-haskell-cabal ide-haskell autocomplete-haskell
+$ apm install language-haskell ide-haskell
 ```
+
+Other packages can be installed from **Haskell IDE → Settings**. See [Requirements section](#requirements) for a list of packages you might want to install.
 
 ## Configuration
 
-Package is fully configurable via **Edit → Preferences → Packages → ide-haskell
-→ Settings**
+Package is fully configurable via **Haskell IDE → Settings**.
 
 You will likely need to specify full paths to `stylish-haskell`, if it is not in
 your `PATH`, at the very least.
