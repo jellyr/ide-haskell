@@ -1,9 +1,3 @@
-{PluginManager} = require './plugin-manager'
-{MainMenuLabel, getEventType} = require './utils'
-{CompositeDisposable, Emitter} = require 'atom'
-{prettifyFile} = require './binutils/prettify'
-UPI = require './upi'
-
 module.exports = IdeHaskell =
   pluginManager: null
   disposables: null
@@ -145,6 +139,11 @@ module.exports = IdeHaskell =
   activate: (state) ->
     @cleanConfig()
 
+    {PluginManager} = require './plugin-manager'
+    {MainMenuLabel} = require './utils'
+    {CompositeDisposable} = require 'atom'
+    {prettifyFile} = require './binutils/prettify'
+
     atom.views.getView(atom.workspace).classList.add 'ide-haskell'
 
     @disposables = new CompositeDisposable
@@ -240,4 +239,5 @@ module.exports = IdeHaskell =
     @pluginManager?.serialize()
 
   provideUpi: ->
+    UPI = require './upi'
     new UPI(@pluginManager)
