@@ -75,8 +75,98 @@ module.exports = IdeHaskell =
       '''
       enum: ['bottom', 'left', 'top', 'right']
 
+  cleanConfig: ->
+    [ 'onSaveCheck'
+    , 'onSaveLint'
+    , 'onMouseHoverShow'
+    , 'useLinter'
+    ].forEach (item) ->
+      if atom.config.get("ide-haskell.#{item}")?
+        atom.config.set "haskell-ghc-mod.#{item}", atom.config.get "ide-haskell.#{item}"
+      atom.config.unset "ide-haskell.#{item}"
+
+    if atom.config.get 'ide-haskell.closeTooltipsOnCursorMove'
+      atom.config.set 'ide-haskell.onCursorMove', 'Hide Tooltip'
+
+    [ 'useBackend'
+    , 'useBuildBackend'
+    , 'closeTooltipsOnCursorMove'
+    ].forEach (item) ->
+      atom.config.unset "ide-haskell.#{item}"
+
+    setTimeout (->
+      newconf = {}
+
+      serialize = (obj, indent = "") ->
+        (for k, v of obj
+          if typeof(v) is 'object'
+            """
+            #{indent}'#{k.replace /'/g, '\\\''}':
+            #{serialize(v, indent+'  ')}
+            """
+          else
+            """
+            #{indent}'#{k.replace /'/g, '\\\''}': '#{v.replace /'/g, '\\\''}'
+            """).join '\n'
+
+
+      [ 'check-file'
+      , 'lint-file'
+      , 'show-type'
+      , 'show-info'
+      , 'show-info-fallback-to-type'
+      , 'insert-type'
+      , 'insert-import'
+      ].forEach (item) ->
+        kbs = atom.keymaps.findKeyBindings command: "ide-haskell:#{item}"
+        kbs.forEach ({selector, keystrokes}) ->
+          newconf[selector] ?= {}
+          newconf[selector][keystrokes] = "haskell-ghc-mod:#{item}"
+
+      [ 'build'
+      , 'clean'
+      , 'test'
+      , 'set-build-target'
+      ].forEach (item) ->
+        kbs = atom.keymaps.findKeyBindings command: "ide-haskell:#{item}"
+        kbs.forEach ({selector, keystrokes}) ->
+          newconf[selector] ?= {}
+          newconf[selector][keystrokes] = "ide-haskell-cabal:#{item}"
+
+      cs = serialize(newconf)
+      if cs
+        atom.workspace.open('ide-haskell-keymap.cson').then (editor) ->
+          editor.setText """
+          # This is ide-haskell system message
+          # Most keybinding commands have been moved to backend packages
+          # Please add the following to your keymap
+          # in order to preserve existing keybindings.
+          # This message won't be shown once there are no obsolete keybindings
+          # anymore
+          #{cs}
+          """
+      ), 1000
+
   activate: (state) ->
+    @cleanConfig()
+
+    atom.views.getView(atom.workspace).classList.add 'ide-haskell'
+
+    @upiProvided = false
+
+    if atom.config.get 'ide-haskell.startupMessageIdeBackend'
+      setTimeout (=>
+        unless @upiProvided
+          atom.notifications.addWarning """
+          Ide-Haskell needs backends that provide most of functionality.
+          Please refer to README for details
+          """,
+          dismissable: true
+        ), 5000
+
     @disposables = new CompositeDisposable
+
+    @pluginManager = new PluginManager state
 
     # settings
 
@@ -93,50 +183,12 @@ module.exports = IdeHaskell =
       IdeHaskellSettingsView = require './settings/ide-haskell-settings-view'
       return new IdeHaskellSettingsView()
 
-    @disposables.add atom.commands.add 'atom-workspace',
-      'ide-haskell:open-settings': ->
-        atom.workspace.open('ide-haskell://config')
-
-    @menu = new CompositeDisposable
-
-    @menu.add atom.menu.add [
-      label: MainMenuLabel
-      submenu : [
-        {label: 'Settings', command: 'ide-haskell:open-settings'}
-      ]
-    ]
-
-    configSchema = require './settings/config-schema'
-
-    for k, v of atom.config.get('ide-haskell.pathSettings.ghcSpecificOptions') when v?
-      atom.config.setSchema("ide-haskell.pathSettings.ghcSpecificOptions.#{k}", configSchema)
-      IdeHaskell.config.pathSettings.properties.defaultGhcVersion.enum.push k
-
-    @upiProvided = false
-
-    @disposables.add disp = atom.packages.onDidTriggerActivationHook 'language-haskell:grammar-used', =>
-      disp.dispose()
-      @activateAll state
-
-  activateAll: (state) ->
-    atom.views.getView(atom.workspace).classList.add 'ide-haskell'
-
-    if atom.config.get 'ide-haskell.startupMessageIdeBackend'
-      setTimeout (=>
-        unless @upiProvided
-          atom.notifications.addWarning """
-          Ide-Haskell needs backends that provide most of functionality.
-          Please refer to README for details
-          """,
-          dismissable: true
-        ), 5000
-
-    @pluginManager = new PluginManager state
-
     # global commands
     @disposables.add atom.commands.add 'atom-workspace',
       'ide-haskell:toggle-output': =>
         @pluginManager.togglePanel()
+      'ide-haskell:open-settings': ->
+        atom.workspace.open('ide-haskell://config')
       'ide-haskell:switch-ghc-version': =>
         VersionSelectListView = require './settings/version-select-view'
         items = (k for k, v of atom.config.get('ide-haskell.pathSettings.ghcSpecificOptions') when v?)
@@ -168,20 +220,28 @@ module.exports = IdeHaskell =
       'atom-text-editor[data-grammar~="haskell"]':
         'escape': 'ide-haskell:close-tooltip'
 
+    @menu = new CompositeDisposable
     @menu.add atom.menu.add [
       label: MainMenuLabel
       submenu : [
         {label: 'Prettify', command: 'ide-haskell:prettify-file'}
         {label: 'Toggle Panel', command: 'ide-haskell:toggle-output'}
+        {label: 'Settings', command: 'ide-haskell:open-settings'}
         {label: 'Switch Active GHC Version', command: 'ide-haskell:switch-ghc-version'}
       ]
     ]
+
+    configSchema = require './settings/config-schema'
+
+    for k, v of atom.config.get('ide-haskell.pathSettings.ghcSpecificOptions') when v?
+      atom.config.setSchema("ide-haskell.pathSettings.ghcSpecificOptions.#{k}", configSchema)
+      IdeHaskell.config.pathSettings.properties.defaultGhcVersion.enum.push k
 
     @pluginManager.activeGHCVersion =
       state.activeVersion ? atom.config.get('ide-haskell.pathSettings.defaultGhcVersion')
 
   deactivate: ->
-    @pluginManager?.deactivate?()
+    @pluginManager.deactivate()
     @pluginManager = null
 
     atom.keymaps.removeBindingsFromSource 'ide-haskell'
@@ -199,4 +259,4 @@ module.exports = IdeHaskell =
 
   provideUpi: ->
     @upiProvided = true
-    new UPI(IdeHaskell)
+    new UPI(@pluginManager)
