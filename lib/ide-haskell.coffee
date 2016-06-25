@@ -62,11 +62,6 @@ module.exports = IdeHaskell =
       type: "string"
       default: 'cabal'
       description: "Path to `cabal` utility, for `cabal format`"
-    startupMessageIdeBackend:
-      type: "boolean"
-      default: true
-      description: "Show info message about haskell-ide-backend service on
-                    activation"
     panelPosition:
       type: 'string'
       default: 'bottom'
@@ -151,18 +146,6 @@ module.exports = IdeHaskell =
     @cleanConfig()
 
     atom.views.getView(atom.workspace).classList.add 'ide-haskell'
-
-    @upiProvided = false
-
-    if atom.config.get 'ide-haskell.startupMessageIdeBackend'
-      setTimeout (=>
-        unless @upiProvided
-          atom.notifications.addWarning """
-          Ide-Haskell needs backends that provide most of functionality.
-          Please refer to README for details
-          """,
-          dismissable: true
-        ), 5000
 
     @disposables = new CompositeDisposable
 
@@ -257,5 +240,4 @@ module.exports = IdeHaskell =
     @pluginManager?.serialize()
 
   provideUpi: ->
-    @upiProvided = true
     new UPI(@pluginManager)
