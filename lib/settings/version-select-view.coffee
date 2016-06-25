@@ -2,7 +2,8 @@
 
 module.exports=
 class VersionSelectListView extends SelectListView
-  initialize: ({@onConfirmed, items}) ->
+  initialize: ({@onConfirmed, items, @withAuto}) ->
+    @withAuto ?= false
     super
     @panel = atom.workspace.addModalPanel
       item: this
@@ -17,7 +18,11 @@ class VersionSelectListView extends SelectListView
     "text"
 
   show: (list) ->
-    @setItems list.map((i) -> text: i)
+    items = list.map((i) -> {text: i, val: i})
+    if @withAuto
+      @setItems [{text: 'Auto', val: ''}].concat(items)
+    else
+      @setItems items
     @panel.show()
     @storeFocusedElement()
     @focusFilterEditor()
@@ -26,5 +31,5 @@ class VersionSelectListView extends SelectListView
     "<li>#{text}</li>"
 
   confirmed: (mod) ->
-    @onConfirmed? mod.text
+    @onConfirmed? mod.val
     @cancel()

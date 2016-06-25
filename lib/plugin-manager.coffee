@@ -71,7 +71,7 @@ class PluginManager
           atom.commands.dispatch atom.views.getView(atom.workspace),
             'ide-haskell:switch-ghc-version'
       before: '#progressBar'
-    @ghcVersElem.innerText = @activeGHCVersion.replace('-', '.')
+    @ghcVersElem.innerText = @activeGHCVersion.replace('-', '.') or 'Auto'
 
   deleteOutputViewPanel: ->
     @outputView.destroy()
@@ -120,7 +120,7 @@ class PluginManager
     @outputView?.showPrevError()
 
   setActiveGHCVersion: (@activeGHCVersion) ->
-    @ghcVersElem.innerText = @activeGHCVersion.replace('-', '.')
+    @ghcVersElem.innerText = @activeGHCVersion.replace('-', '.') or 'Auto'
     @emitter.emit 'did-change-ghc-version', @activeGHCVersion
 
 
