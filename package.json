@@ -17,8 +17,7 @@
     "ide-haskell-upi": {
       "description": "Universal pluggable interface",
       "versions": {
-        "0.0.1": "provideUpi_001",
-        "0.1.0": "provideUpi_010"
+        "0.0.1": "provideUpi"
       }
     }
   },

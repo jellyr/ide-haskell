@@ -77,7 +77,6 @@ module.exports = IdeHaskell =
 
   activate: (state) ->
     @disposables = new CompositeDisposable
-    @disposables.add @emitter = new Emitter
 
     # settings
 
@@ -181,8 +180,6 @@ module.exports = IdeHaskell =
     @pluginManager.activeGHCVersion =
       state.activeVersion ? atom.config.get('ide-haskell.pathSettings.defaultGhcVersion')
 
-    @emitter.emit 'did-activate', @pluginManager
-
   deactivate: ->
     @pluginManager?.deactivate?()
     @pluginManager = null
@@ -200,10 +197,6 @@ module.exports = IdeHaskell =
   serialize: ->
     @pluginManager?.serialize()
 
-  provideUpi_001: ->
+  provideUpi: ->
     @upiProvided = true
-    new UPI(IdeHaskell, 1)
-
-  provideUpi_010: ->
-    @upiProvided = true
-    new UPI(IdeHaskell, 10)
+    new UPI(IdeHaskell)
