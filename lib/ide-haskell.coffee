@@ -226,7 +226,6 @@ module.exports = IdeHaskell =
       submenu : [
         {label: 'Prettify', command: 'ide-haskell:prettify-file'}
         {label: 'Toggle Panel', command: 'ide-haskell:toggle-output'}
-        {label: 'Settings', command: 'ide-haskell:open-settings'}
         {label: 'Switch Active GHC Version', command: 'ide-haskell:switch-ghc-version'}
       ]
     ]

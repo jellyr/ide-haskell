@@ -1,0 +1,6 @@
+'menu': [
+  label: 'Haskell IDE'
+  submenu : [
+    {label: 'Settings', command: 'ide-haskell:open-settings'}
+  ]
+]
