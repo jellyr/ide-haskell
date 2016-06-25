@@ -20,7 +20,8 @@ class PluginManager
     @createOutputViewPanel(state)
     @subscribeEditorController()
 
-    @activeGHCVersion = state.activeGHCVersion ? ''
+    @activeGHCVersion = state.activeGHCVersion ? atom.config.get('ide-haskell.pathSettings.defaultGhcVersion')
+    @createGHCVersionControl()
 
   deactivate: ->
     @checkResults.destroy()
@@ -62,6 +63,15 @@ class PluginManager
   # Create and delete output view panel.
   createOutputViewPanel: (state) ->
     @outputView = new OutputPanel(state.outputView, @checkResults)
+
+  createGHCVersionControl: ->
+    @disposables.add @outputView.addPanelControl @ghcVersElem = (document.createElement 'ide-haskell-ghc-version'),
+      events:
+        click: ->
+          atom.commands.dispatch atom.views.getView(atom.workspace),
+            'ide-haskell:switch-ghc-version'
+      before: '#progressBar'
+    @ghcVersElem.innerText = @activeGHCVersion.replace('-', '.')
 
   deleteOutputViewPanel: ->
     @outputView.destroy()
@@ -110,6 +120,7 @@ class PluginManager
     @outputView?.showPrevError()
 
   setActiveGHCVersion: (@activeGHCVersion) ->
+    @ghcVersElem.innerText = @activeGHCVersion.replace('-', '.')
     @emitter.emit 'did-change-ghc-version', @activeGHCVersion
 
 

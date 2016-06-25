@@ -218,9 +218,6 @@ module.exports = IdeHaskell =
       atom.config.setSchema("ide-haskell.pathSettings.ghcSpecificOptions.#{k}", configSchema)
       IdeHaskell.config.pathSettings.properties.defaultGhcVersion.enum.push k
 
-    @pluginManager.activeGHCVersion =
-      state.activeVersion ? atom.config.get('ide-haskell.pathSettings.defaultGhcVersion')
-
   deactivate: ->
     @pluginManager.deactivate()
     @pluginManager = null
