@@ -1,9 +1,34 @@
-{CompositeDisposable, Point} = require 'atom'
+{CompositeDisposable, Point, Disposable} = require 'atom'
 {MainMenuLabel, getEventType} = require './utils'
+
+shouldShowTooltipHandlers = []
 
 module.exports =
 class UPI
   constructor: (@pluginManager) ->
+    @disposables = new CompositeDisposable
+    @mainInst = new UPIInstance(@pluginManager, @disposables, 'main')
+    @disposables.add @pluginManager.onShouldShowTooltip ({editor, pos, eventType}) =>
+      @mainInst.showTooltip
+        editor: editor
+        pos: pos
+        eventType: eventType
+        tooltip: (crange) ->
+          shouldShowTooltipHandlers.map ({callback}) -> callback
+          .reduce(
+            (acc, cur) ->
+              acc.catch (e) ->
+                unless e.ignore
+                  console.error e
+                res = cur editor, crange, eventType
+                unless res?
+                  throw e
+                return res
+            , Promise.reject ignore: true
+            )
+
+  destroy: ->
+    @disposables.dispose()
 
   ###
   Call this function in consumer to get actual interface
@@ -115,18 +140,17 @@ class UPIInstance
 
   returns Disposable
   ###
-  onShouldShowTooltip: (callback) ->
-    @disposables.add disp = @pluginManager.onShouldShowTooltip ({editor, pos, eventType}) =>
-      @showTooltip
-        editor: editor
-        pos: pos
-        eventType: eventType
-        tooltip: (crange) ->
-          res = callback editor, crange, eventType
-          if res?
-            Promise.resolve res
-          else
-            Promise.reject ignore: true
+  onShouldShowTooltip: (priority, callback) ->
+    unless callback? # TODO: Make separate
+      callback = priority
+      priority = 0
+    i = shouldShowTooltipHandlers.findIndex (el) -> el.priority < priority
+    item = {priority, callback}
+    shouldShowTooltipHandlers.splice(i, 0, item)
+    @disposables.add disp = new Disposable ->
+      d = shouldShowTooltipHandlers.findIndex (el) -> el is item
+      if d >= 0
+        shouldShowTooltipHandlers.splice(d, 1)
     disp
 
   ###

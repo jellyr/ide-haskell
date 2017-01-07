@@ -188,9 +188,14 @@ module.exports = IdeHaskell =
       ]
     ]
 
+    UPI = require './upi'
+    @UPI = new UPI(@pluginManager)
+
   deactivate: ->
     @pluginManager.deactivate()
     @pluginManager = null
+
+    @UPI.destroy()
 
     atom.keymaps.removeBindingsFromSource 'ide-haskell'
 
@@ -207,5 +212,4 @@ module.exports = IdeHaskell =
 
   provideUpi: ->
     @upiProvided = true
-    UPI = require './upi'
-    new UPI(@pluginManager)
+    @UPI
